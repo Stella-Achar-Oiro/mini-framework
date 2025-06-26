@@ -1,46 +1,10 @@
-// src/index.js
-import { createElement, render, diff, patch } from './dom';
-import { createStore } from './state';
-import { createRouter } from './router';
-import { createEventSystem } from './events';
+/**
+ * Core Framework Modules
+ */
 
-// Framework initialization function
-function createApp(config = {}) {
-  // Create store with initial state
-  const store = createStore(config.initialState || {});
-  
-  // Create router with routes config
-  const router = createRouter(config.routes || []);
-  
-  // The app object that users will interact with
-  return {
-    // Mount the application to a DOM element
-    mount(selector) {
-      const container = document.querySelector(selector);
-      if (!container) throw new Error(`Element ${selector} not found`);
-      
-      // Initialize router
-      router.init(store);
-      
-      // Initial render
-      render(config.rootComponent, container, store);
-      
-      return this;
-    },
-    
-    // Expose core APIs
-    createElement,
-    createStore,
-    router
-  };
-}
-
-// Export all public APIs
-export {
-  createApp,
-  createElement,
-  render,
-  createStore,
-  createRouter,
-  createEventSystem
-};
+export { MiniFramework } from './component.js';
+export { DOM } from './dom.js';
+export { EventManager } from './dom-events.js';
+export { StateManager } from './state.js';
+export { Router } from './router.js';
+export { Events } from './events.js';
