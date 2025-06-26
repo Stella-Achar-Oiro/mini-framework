@@ -123,6 +123,11 @@ export class MiniFramework {
                 throw new Error(`Container element "${this.options.container}" not found`);
             }
 
+            // Initialize event manager with container as root
+            if (this.events) {
+                this.events.init(this.container);
+            }
+
             // Initialize plugins
             this._initializePlugins();
 
