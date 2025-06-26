@@ -1,26 +1,25 @@
-// rollup.config.js
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
-export default [
-  // ESM build
-  {
-    input: 'src/index.js',
-    output: {
-      file: 'dist/framework.esm.js',
-      format: 'esm'
-    },
-    plugins: [resolve(), commonjs()]
-  },
-  // UMD build (minified)
-  {
-    input: 'src/index.js',
-    output: {
+const isProduction = process.env.NODE_ENV === 'production';
+
+export default {
+  input: 'src/index.js',
+  output: [
+    {
+      file: 'dist/mini-framework.js',
+      format: 'umd',
       name: 'MiniFramework',
-      file: 'dist/framework.min.js',
-      format: 'umd'
+      sourcemap: !isProduction
     },
-    plugins: [resolve(), commonjs(), terser()]
-  }
-];
+    {
+      file: 'dist/mini-framework.esm.js',
+      format: 'esm',
+      sourcemap: !isProduction
+    }
+  ],
+  plugins: [
+    nodeResolve(),
+    ...(isProduction ? [terser()] : [])
+  ]
+};
