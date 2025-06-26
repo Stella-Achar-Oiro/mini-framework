@@ -288,6 +288,93 @@ export function findVNodes(vnode, predicate) {
 }
 
 /**
+ * Create enhanced event handler with options
+ * @param {Function} handler - Event handler function
+ * @param {Object} options - Event options
+ * @returns {Object} Event configuration object
+ */
+export function eventHandler(handler, options = {}) {
+    return {
+        handler,
+        ...options
+    };
+}
+
+/**
+ * Create a debounced event handler
+ * @param {Function} handler - Event handler function
+ * @param {number} delay - Debounce delay in ms
+ * @param {Object} options - Additional options
+ * @returns {Object} Event configuration object
+ */
+export function debounceEvent(handler, delay, options = {}) {
+    return eventHandler(handler, { ...options, debounce: delay });
+}
+
+/**
+ * Create a throttled event handler
+ * @param {Function} handler - Event handler function
+ * @param {number} limit - Throttle limit in ms
+ * @param {Object} options - Additional options
+ * @returns {Object} Event configuration object
+ */
+export function throttleEvent(handler, limit, options = {}) {
+    return eventHandler(handler, { ...options, throttle: limit });
+}
+
+/**
+ * Create a one-time event handler
+ * @param {Function} handler - Event handler function
+ * @param {Object} options - Additional options
+ * @returns {Object} Event configuration object
+ */
+export function onceEvent(handler, options = {}) {
+    return eventHandler(handler, { ...options, once: true });
+}
+
+/**
+ * Create a conditional event handler
+ * @param {Function} handler - Event handler function
+ * @param {Function} condition - Condition function
+ * @param {Object} options - Additional options
+ * @returns {Object} Event configuration object
+ */
+export function whenEvent(handler, condition, options = {}) {
+    return eventHandler(handler, { ...options, condition });
+}
+
+/**
+ * Create an event handler with data binding
+ * @param {Function} handler - Event handler function
+ * @param {Object} data - Data to bind to event
+ * @param {Object} options - Additional options
+ * @returns {Object} Event configuration object
+ */
+export function dataEvent(handler, data, options = {}) {
+    return eventHandler(handler, { ...options, data });
+}
+
+/**
+ * Create an event handler with preventDefault
+ * @param {Function} handler - Event handler function
+ * @param {Object} options - Additional options
+ * @returns {Object} Event configuration object
+ */
+export function preventEvent(handler, options = {}) {
+    return eventHandler(handler, { ...options, preventDefault: true });
+}
+
+/**
+ * Create an event handler with stopPropagation
+ * @param {Function} handler - Event handler function
+ * @param {Object} options - Additional options
+ * @returns {Object} Event configuration object
+ */
+export function stopEvent(handler, options = {}) {
+    return eventHandler(handler, { ...options, stopPropagation: true });
+}
+
+/**
  * Convert virtual node to HTML string (server-side rendering helper)
  * @param {*} vnode - Virtual node to convert
  * @returns {string} HTML string
@@ -333,7 +420,7 @@ export function vnodeToHTML(vnode) {
     if (vnode.type === 'element') {
         const { tag, attrs, children } = vnode;
         const attrString = attrs ? Object.entries(attrs)
-            .filter(([key, value]) => key !== 'key' && key !== 'ref' && value != null)
+            .filter(([key, value]) => key !== 'key' && key !== 'ref' && value != null && !key.startsWith('on'))
             .map(([key, value]) => {
                 if (key === 'className') key = 'class';
                 if (typeof value === 'boolean') {
