@@ -25,20 +25,24 @@ export class DOM {
     /**
      * Create a new DOM abstraction instance
      * @param {Object} options - DOM configuration options
+     * @param {EventManager} eventManager - Optional event manager instance
      */
-    constructor(options = {}) {
+    constructor(options = {}, eventManager = null) {
         this.options = {
             escapeHtml: true,
             validateVNodes: true,
             optimizeUpdates: true,
             useDocumentFragment: true,
             trackKeys: true,
+            passive: false,
+            capture: false,
             ...options
         };
 
         this.errorBoundary = new ErrorBoundary(this.options.debug);
         this.elementCache = new WeakMap();
         this.vnodeCache = new Map();
+        this.eventManager = eventManager;
     }
 
     /**
@@ -435,36 +439,129 @@ export class DOM {
      * @param {Function} handler - Event handler function
      */
     _setEventAttribute(element, eventName, handler) {
+        // Support for custom event syntax with data binding
+        if (typeof handler === 'object' && handler.handler) {
+            return this._setCustomEventAttribute(element, eventName, handler);
+        }
+        
         // Convert React-style event names to DOM event names
         const domEventName = this._convertEventName(eventName);
         
         // Store event handler reference for cleanup
         if (!element._miniFrameworkEvents) {
             element._miniFrameworkEvents = new Map();
+            element._miniFrameworkEventIds = new Map();
         }
         
         // Remove previous handler if exists
-        const previousHandler = element._miniFrameworkEvents.get(domEventName);
-        if (previousHandler) {
-            element.removeEventListener(domEventName, previousHandler);
+        const previousHandlerId = element._miniFrameworkEventIds.get(domEventName);
+        if (previousHandlerId && this.eventManager) {
+            this.eventManager.off(previousHandlerId);
         }
         
-        // Create wrapped handler for better error handling
-        const wrappedHandler = (event) => {
-            try {
-                return handler(event);
-            } catch (error) {
-                if (this.errorBoundary) {
-                    this.errorBoundary.handleError(`Event handler ${eventName}`, error, 'component');
-                } else {
-                    console.error(`Event handler error for ${eventName}:`, error);
-                }
+        // If we have an EventManager, use it for enhanced event handling
+        if (this.eventManager) {
+            const listenerId = this.eventManager.on(element, domEventName, handler, {
+                passive: this.options.passive,
+                capture: this.options.capture
+            });
+            
+            element._miniFrameworkEventIds.set(domEventName, listenerId);
+        } else {
+            // Fallback to standard event handling
+            const previousHandler = element._miniFrameworkEvents.get(domEventName);
+            if (previousHandler) {
+                element.removeEventListener(domEventName, previousHandler);
             }
+            
+            // Create wrapped handler for better error handling
+            const wrappedHandler = (event) => {
+                try {
+                    return handler(event);
+                } catch (error) {
+                    if (this.errorBoundary) {
+                        this.errorBoundary.handleError(`Event handler ${eventName}`, error, 'component');
+                    } else {
+                        console.error(`Event handler error for ${eventName}:`, error);
+                    }
+                }
+            };
+            
+            // Add new handler
+            element.addEventListener(domEventName, wrappedHandler);
+            element._miniFrameworkEvents.set(domEventName, wrappedHandler);
+        }
+    }
+
+    /**
+     * Set custom event attribute with enhanced options
+     * @private
+     * @param {Element} element - DOM element
+     * @param {string} eventName - Event name
+     * @param {Object} eventConfig - Event configuration object
+     */
+    _setCustomEventAttribute(element, eventName, eventConfig) {
+        const {
+            handler,
+            data = {},
+            once = false,
+            passive = false,
+            capture = false,
+            debounce = 0,
+            throttle = 0,
+            condition = null,
+            preventDefault = false,
+            stopPropagation = false,
+            priority = 'normal'
+        } = eventConfig;
+        
+        const domEventName = this._convertEventName(eventName);
+        
+        if (!this.eventManager) {
+            console.warn('EventManager not available, using standard event handling');
+            return this._setEventAttribute(element, eventName, handler);
+        }
+        
+        // Enhanced event handler with custom options
+        const enhancedHandler = (event) => {
+            if (preventDefault) {
+                event.preventDefault();
+            }
+            
+            if (stopPropagation) {
+                event.stopPropagation();
+            }
+            
+            // Add custom data to event
+            if (Object.keys(data).length > 0) {
+                Object.assign(event, { customData: data });
+            }
+            
+            return handler(event);
         };
         
-        // Add new handler
-        element.addEventListener(domEventName, wrappedHandler);
-        element._miniFrameworkEvents.set(domEventName, wrappedHandler);
+        const options = {
+            once,
+            passive,
+            capture,
+            debounce,
+            throttle,
+            condition,
+            priority: priority === 'high' ? 2 : priority === 'low' ? 0 : 1
+        };
+        
+        // Store previous listener ID for cleanup
+        if (!element._miniFrameworkEventIds) {
+            element._miniFrameworkEventIds = new Map();
+        }
+        
+        const previousHandlerId = element._miniFrameworkEventIds.get(domEventName);
+        if (previousHandlerId) {
+            this.eventManager.off(previousHandlerId);
+        }
+        
+        const listenerId = this.eventManager.on(element, domEventName, enhancedHandler, options);
+        element._miniFrameworkEventIds.set(domEventName, listenerId);
     }
 
     /**
