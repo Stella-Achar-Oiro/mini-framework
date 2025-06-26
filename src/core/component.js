@@ -58,8 +58,8 @@ export class MiniFramework {
         
         // Initialize core systems with error boundaries
         try {
-            this.dom = new DOM(this.options.dom);
             this.events = new EventManager(this.options.events);
+            this.dom = new DOM(this.options.dom, this.events);
             this.state = new StateManager(this.options.state, this.options.debug);
             this.router = new Router(this.options.routing);
         } catch (error) {
