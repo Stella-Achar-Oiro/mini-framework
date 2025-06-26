@@ -750,16 +750,25 @@ export class DOM {
      * @param {string} eventName - Event name (e.g., 'onClick')
      */
     _removeEventAttribute(element, eventName) {
-        if (!element._miniFrameworkEvents) {
-            return;
+        const domEventName = this._convertEventName(eventName);
+        
+        // Try EventManager first
+        if (element._miniFrameworkEventIds) {
+            const listenerId = element._miniFrameworkEventIds.get(domEventName);
+            if (listenerId && this.eventManager) {
+                this.eventManager.off(listenerId);
+                element._miniFrameworkEventIds.delete(domEventName);
+                return;
+            }
         }
         
-        const domEventName = this._convertEventName(eventName);
-        const handler = element._miniFrameworkEvents.get(domEventName);
-        
-        if (handler) {
-            element.removeEventListener(domEventName, handler);
-            element._miniFrameworkEvents.delete(domEventName);
+        // Fallback to standard cleanup
+        if (element._miniFrameworkEvents) {
+            const handler = element._miniFrameworkEvents.get(domEventName);
+            if (handler) {
+                element.removeEventListener(domEventName, handler);
+                element._miniFrameworkEvents.delete(domEventName);
+            }
         }
     }
 
@@ -769,6 +778,17 @@ export class DOM {
      * @param {Element} element - DOM element
      */
     _cleanupEventListeners(element) {
+        // Clean up EventManager listeners
+        if (element._miniFrameworkEventIds) {
+            element._miniFrameworkEventIds.forEach((listenerId) => {
+                if (this.eventManager) {
+                    this.eventManager.off(listenerId);
+                }
+            });
+            element._miniFrameworkEventIds.clear();
+        }
+        
+        // Clean up standard event listeners
         if (element._miniFrameworkEvents) {
             element._miniFrameworkEvents.forEach((handler, eventName) => {
                 element.removeEventListener(eventName, handler);
