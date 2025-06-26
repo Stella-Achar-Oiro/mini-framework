@@ -167,13 +167,25 @@ export class MiniFramework {
 
     /**
      * Render a component to the container
+     * @param {Function|string|Object} component - Component to render
+     * @param {Object} props - Props to pass to component
+     * @returns {MiniFramework} Framework instance for chaining
      */
     render(component, props = {}) {
         if (!this.container) {
             throw new Error('Framework not initialized. Call init() first.');
         }
 
-        try {
+        const startTime = performance.now();
+        
+        return this.errorBoundary.wrap(() => {
+            // Store for re-rendering
+            this._lastComponent = component;
+            this._lastProps = props;
+            
+            // Apply middleware to props
+            const processedProps = this._applyMiddleware(props, 'props');
+            
             let vnode;
             
             if (typeof component === 'string') {
@@ -182,26 +194,39 @@ export class MiniFramework {
                 if (!componentDef) {
                     throw new Error(`Component "${component}" not found`);
                 }
-                vnode = typeof componentDef === 'function' ? componentDef(props) : componentDef;
+                vnode = typeof componentDef === 'function' 
+                    ? componentDef(processedProps) 
+                    : componentDef;
             } else if (typeof component === 'function') {
                 // Component function
-                vnode = component(props);
+                vnode = component(processedProps);
             } else {
                 // Direct vnode
                 vnode = component;
             }
+
+            // Apply middleware to vnode
+            vnode = this._applyMiddleware(vnode, 'vnode');
 
             // Clear container and render
             this.container.innerHTML = '';
             const element = this.dom.createElement(vnode);
             this.container.appendChild(element);
             
-            this.logger.debug('Component rendered successfully');
+            // Track performance
+            const renderTime = performance.now() - startTime;
+            this.performance.renderTimes.push(renderTime);
+            this.performance.lastRender = renderTime;
+            this.renderCount++;
+            
+            // Keep only last 100 render times
+            if (this.performance.renderTimes.length > 100) {
+                this.performance.renderTimes.shift();
+            }
+            
+            this.logger.debug(`Component rendered successfully in ${renderTime.toFixed(2)}ms`);
             return this;
-        } catch (error) {
-            this.logger.error('Render failed:', error);
-            throw error;
-        }
+        }, 'Render failed');
     }
 
     /**
