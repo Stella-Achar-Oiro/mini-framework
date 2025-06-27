@@ -45,3 +45,10 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+
+# Demo files (temporary development files)
+*-demo.html
+*-demo.js
+demo-*.js
+demo-*.html
+*-test.html

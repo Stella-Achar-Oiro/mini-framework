@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+*.min.js
+CHANGELOG.md
+package-lock.json
+yarn.lock
