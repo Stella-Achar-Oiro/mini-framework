@@ -586,8 +586,6 @@ export class DOM {
             'scroll': 'scroll',
             'resize': 'resize',
             'load': 'load',
-            'unload': 'unload',
-            'beforeunload': 'beforeunload',
             'error': 'error',
             'select': 'select',
             'contextmenu': 'contextmenu',
@@ -874,4 +872,16 @@ export class DOM {
             throw new Error('Virtual node children must be an array');
         }
     }
+}
+
+/**
+ * Create a virtual node (standalone function)
+ * @param {string} tag - HTML tag name
+ * @param {Object} attrs - Element attributes
+ * @param {Array|string} children - Child elements or text content
+ * @returns {Object} Virtual node object
+ */
+export function createVNode(tag, attrs = {}, children = []) {
+    const dom = new DOM();
+    return dom.createVNode(tag, attrs, children);
 }
