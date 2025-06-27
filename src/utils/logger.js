@@ -4,7 +4,7 @@
 
 export class Logger {
     constructor(debug = false) {
-        this.debug = debug;
+        this.debugEnabled = debug;
         this.prefix = '[MiniFramework]';
     }
 
@@ -12,7 +12,7 @@ export class Logger {
      * Log info message
      */
     info(...args) {
-        if (this.debug) {
+        if (this.debugEnabled) {
             console.log(this.prefix, ...args);
         }
     }
@@ -21,7 +21,7 @@ export class Logger {
      * Log debug message
      */
     debug(...args) {
-        if (this.debug) {
+        if (this.debugEnabled) {
             console.debug(this.prefix, ...args);
         }
     }
@@ -44,6 +44,6 @@ export class Logger {
      * Enable/disable debug mode
      */
     setDebug(enabled) {
-        this.debug = enabled;
+        this.debugEnabled = enabled;
     }
 }
