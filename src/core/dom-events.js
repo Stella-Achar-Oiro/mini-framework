@@ -243,11 +243,11 @@ export class EventManager {
         if (typeof target === 'string') {
             // Selector-based event (delegation)
             return this._registerDelegatedEvent(target, eventType, listener);
-        } else if (target instanceof Element) {
-            // Direct element event
+        } else if (target instanceof Element || target === window || target === document) {
+            // Direct element/window/document event
             return this._registerDirectEvent(target, eventType, listener);
         } else {
-            throw new Error('Target must be a CSS selector string or DOM element');
+            throw new Error('Target must be a CSS selector string, DOM element, window, or document');
         }
     }
 
@@ -535,11 +535,12 @@ export class EventManager {
             return;
         }
         
-        // Common events to delegate
+        // Common events to delegate (excluding restricted events)
         const commonEvents = [
             'click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout',
             'keydown', 'keyup', 'keypress', 'focus', 'blur', 'change', 'input',
-            'submit', 'reset', 'scroll', 'resize', 'load', 'unload'
+            'submit', 'reset', 'scroll', 'resize', 'load'
+            // Note: 'unload' removed due to permissions policy restrictions
         ];
         
         commonEvents.forEach(eventType => {
