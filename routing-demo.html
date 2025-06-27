@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Framework - Routing System Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+            line-height: 1.6;
+        }
+        
+        #app {
+            min-height: 100vh;
+        }
+        
+        /* Navigation hover effects */
+        nav a:hover {
+            background: #e9ecef !important;
+            color: #007bff !important;
+        }
+        
+        /* Product card hover effects */
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+        }
+        
+        /* Button hover effects */
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        /* Transition animations */
+        .page {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Route transition classes */
+        .route-transition-container {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            min-height: 500px;
+        }
+
+        .route-transition-element {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100%;
+            transition: all 300ms ease-in-out;
+        }
+
+        /* Fade transitions */
+        .route-fade-enter {
+            opacity: 0;
+        }
+        .route-fade-enter-active {
+            opacity: 1;
+        }
+        .route-fade-leave {
+            opacity: 1;
+        }
+        .route-fade-leave-active {
+            opacity: 0;
+        }
+
+        /* Slide transitions */
+        .route-slide-left-enter {
+            transform: translateX(100%);
+        }
+        .route-slide-left-enter-active {
+            transform: translateX(0);
+        }
+        .route-slide-left-leave {
+            transform: translateX(0);
+        }
+        .route-slide-left-leave-active {
+            transform: translateX(-100%);
+        }
+
+        .route-slide-right-enter {
+            transform: translateX(-100%);
+        }
+        .route-slide-right-enter-active {
+            transform: translateX(0);
+        }
+        .route-slide-right-leave {
+            transform: translateX(0);
+        }
+        .route-slide-right-leave-active {
+            transform: translateX(100%);
+        }
+
+        .route-slide-up-enter {
+            transform: translateY(100%);
+        }
+        .route-slide-up-enter-active {
+            transform: translateY(0);
+        }
+        .route-slide-up-leave {
+            transform: translateY(0);
+        }
+        .route-slide-up-leave-active {
+            transform: translateY(-100%);
+        }
+
+        .route-slide-down-enter {
+            transform: translateY(-100%);
+        }
+        .route-slide-down-enter-active {
+            transform: translateY(0);
+        }
+        .route-slide-down-leave {
+            transform: translateY(0);
+        }
+        .route-slide-down-leave-active {
+            transform: translateY(100%);
+        }
+
+        /* Scale transitions */
+        .route-scale-enter {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+        .route-scale-enter-active {
+            transform: scale(1);
+            opacity: 1;
+        }
+        .route-scale-leave {
+            transform: scale(1);
+            opacity: 1;
+        }
+        .route-scale-leave-active {
+            transform: scale(1.2);
+            opacity: 0;
+        }
+
+        /* Flip transitions */
+        .route-flip-enter {
+            transform: rotateY(-90deg);
+            opacity: 0;
+        }
+        .route-flip-enter-active {
+            transform: rotateY(0);
+            opacity: 1;
+        }
+        .route-flip-leave {
+            transform: rotateY(0);
+            opacity: 1;
+        }
+        .route-flip-leave-active {
+            transform: rotateY(90deg);
+            opacity: 0;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+                gap: 10px !important;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+            }
+            
+            .filters > div {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* Loading spinner for lazy loading */
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 123, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #007bff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100vh; color: #666;">
+            <div style="text-align: center;">
+                <div class="loading-spinner" style="margin: 0 auto 20px;"></div>
+                <p>Loading routing demo...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="routing-demo.js"></script>
+</body>
+</html>
