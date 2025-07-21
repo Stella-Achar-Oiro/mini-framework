@@ -159,11 +159,16 @@ export default class TodoApp {
                 this.dom.createVNode('h1', {}, ['todos']),
                 new TodoHeader(this).render()
             ]),
-            
-            hasTodos && this.dom.createVNode('section', { class: 'main' }, [
+
+            // Always render main section, but hide it when no todos
+            this.dom.createVNode('section', {
+                class: 'main',
+                style: hasTodos ? '' : 'display: none;'
+            }, [
                 new TodoMain(this, filteredTodos, editingId).render()
             ]),
-            
+
+            // Only show footer when there are todos
             hasTodos && this.dom.createVNode('footer', { class: 'footer' }, [
                 new TodoFooter(this, activeTodos.length, completedTodos.length, filter).render()
             ])
