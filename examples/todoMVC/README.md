@@ -43,10 +43,12 @@ todoMVC/
 
 ## Running the Application
 
+**Important**: The server must be started from the project root directory to properly serve the framework files.
+
 1. **Development Server:**
    ```bash
-   npm run serve
-   # or use Python
+   # Make sure you're in the mini-framework root directory
+   cd /path/to/mini-framework
    python3 -m http.server 8080
    ```
 
@@ -115,6 +117,15 @@ this.router.route('/active', () => {
 - **Event delegation** for better performance
 - **State batching** to minimize re-renders
 - **localStorage persistence** for data permanence
+
+## Troubleshooting
+
+If the todoMVC doesn't render or shows import errors:
+
+1. **Check Server Path**: Make sure you're running the server from the project root directory (mini-framework), not from the examples/todoMVC directory
+2. **Check Console**: Open browser DevTools and check for JavaScript errors in the Console tab
+3. **Check Network**: Verify all framework files are loading correctly in the Network tab
+4. **Clear Cache**: Try a hard refresh (Ctrl+F5 or Cmd+Shift+R) to clear browser cache
 
 ## Browser Compatibility
 
