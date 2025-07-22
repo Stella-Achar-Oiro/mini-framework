@@ -1,0 +1,35 @@
+#app {
+    min-height: 200px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.counter {
+    text-align: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    color: rgb(24, 24, 85);
+}
+
+.count {
+    font-size: 2em;
+    margin: 20px 0;
+}
+
+.btn:nth-child(2) {
+    background-color: rgb(228, 74, 74);
+}
+
+.btn:nth-child(3) {
+    background-color: rgb(76, 190, 76);
+}
+
+button {
+    font-size: 1.2em;
+    padding: 10px 20px;
+    margin: 0 10px;
+    cursor: pointer;
+}

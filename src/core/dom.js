@@ -256,13 +256,14 @@ export class DOM {
      * @returns {Element} Created element
      */
     _createElement(vnode) {
-        const { tag, attrs, children } = vnode;
+        const { tag, attrs, attributes, children } = vnode;
 
         // Create the element
         const element = document.createElement(tag);
 
-        // Set attributes
-        this._setAttributes(element, attrs);
+        // Set attributes (support both 'attrs' and 'attributes' for backward compatibility)
+        const elementAttrs = attrs || attributes;
+        this._setAttributes(element, elementAttrs);
 
         // Add children
         if (children && children.length > 0) {
@@ -325,6 +326,11 @@ export class DOM {
      * @param {Object} attrs - Attributes object
      */
     _setAttributes(element, attrs) {
+        // Handle null, undefined, or non-object attributes
+        if (!attrs || typeof attrs !== 'object') {
+            return;
+        }
+
         Object.entries(attrs).forEach(([key, value]) => {
             this._setAttribute(element, key, value);
         });
@@ -345,6 +351,7 @@ export class DOM {
 
         // Handle event attributes (onClick, onMouseOver, etc.)
         if (key.startsWith('on') && typeof value === 'function') {
+
             this._setEventAttribute(element, key, value);
             return;
         }
@@ -435,7 +442,7 @@ export class DOM {
      * Set event attribute on an element
      * @private
      * @param {Element} element - DOM element
-     * @param {string} eventName - Event name (e.g., 'onClick')
+     * @param {string} eventName - Event name (e.g., 'onClick', 'onclick')
      * @param {Function} handler - Event handler function
      */
     _setEventAttribute(element, eventName, handler) {
@@ -443,29 +450,36 @@ export class DOM {
         if (typeof handler === 'object' && handler.handler) {
             return this._setCustomEventAttribute(element, eventName, handler);
         }
-        
-        // Convert React-style event names to DOM event names
+
+        // Convert React-style event names to DOM event names for addEventListener
         const domEventName = this._convertEventName(eventName);
-        
+
         // Store event handler reference for cleanup
         if (!element._miniFrameworkEvents) {
             element._miniFrameworkEvents = new Map();
             element._miniFrameworkEventIds = new Map();
         }
-        
+
         // Remove previous handler if exists
         const previousHandlerId = element._miniFrameworkEventIds.get(domEventName);
         if (previousHandlerId && this.eventManager) {
             this.eventManager.off(previousHandlerId);
         }
-        
+
+        // Set the onclick property on the element (for direct access)
+        // This makes element.onclick return the handler function
+        const onEventPropertyName = 'on' + domEventName;
+        if (onEventPropertyName in element) {
+            element[onEventPropertyName] = handler;
+        }
+
         // If we have an EventManager, use it for enhanced event handling
         if (this.eventManager) {
             const listenerId = this.eventManager.on(element, domEventName, handler, {
                 passive: this.options.passive,
                 capture: this.options.capture
             });
-            
+
             element._miniFrameworkEventIds.set(domEventName, listenerId);
         } else {
             // Fallback to standard event handling
@@ -473,7 +487,7 @@ export class DOM {
             if (previousHandler) {
                 element.removeEventListener(domEventName, previousHandler);
             }
-            
+
             // Create wrapped handler for better error handling
             const wrappedHandler = (event) => {
                 try {
@@ -486,7 +500,7 @@ export class DOM {
                     }
                 }
             };
-            
+
             // Add new handler
             element.addEventListener(domEventName, wrappedHandler);
             element._miniFrameworkEvents.set(domEventName, wrappedHandler);
@@ -567,41 +581,20 @@ export class DOM {
     /**
      * Convert React-style event names to DOM event names
      * @private
-     * @param {string} eventName - React-style event name
-     * @returns {string} DOM event name
+     * @param {string} eventName - React-style event name (e.g., 'onClick', 'onMouseOver')
+     * @returns {string} DOM event name for addEventListener (e.g., 'click', 'mouseover')
      */
     _convertEventName(eventName) {
         // Remove 'on' prefix and convert to lowercase
         const name = eventName.slice(2).toLowerCase();
-        
-        // Handle special cases
+
+        // Handle special cases where DOM event names differ from the camelCase version
         const eventMap = {
             'doubleclick': 'dblclick',
-            'change': 'change',
-            'input': 'input',
-            'submit': 'submit',
-            'reset': 'reset',
-            'focus': 'focus',
-            'blur': 'blur',
-            'scroll': 'scroll',
-            'resize': 'resize',
-            'load': 'load',
-            'error': 'error',
-            'select': 'select',
-            'contextmenu': 'contextmenu',
-            'wheel': 'wheel',
-            'copy': 'copy',
-            'cut': 'cut',
-            'paste': 'paste',
-            'drag': 'drag',
-            'dragend': 'dragend',
-            'dragenter': 'dragenter',
-            'dragleave': 'dragleave',
-            'dragover': 'dragover',
-            'dragstart': 'dragstart',
-            'drop': 'drop'
+            // Most events just need the 'on' prefix removed and lowercased
+            // e.g., onClick -> click, onMouseOver -> mouseover
         };
-        
+
         return eventMap[name] || name;
     }
 
@@ -706,9 +699,11 @@ export class DOM {
         }
 
         if (newVNode.type === VNODE_TYPES.ELEMENT) {
-            // Update attributes
-            this._updateAttributes(element, oldVNode.attrs, newVNode.attrs);
-            
+            // Update attributes (support both 'attrs' and 'attributes' for backward compatibility)
+            const oldAttrs = oldVNode.attrs || oldVNode.attributes || {};
+            const newAttrs = newVNode.attrs || newVNode.attributes || {};
+            this._updateAttributes(element, oldAttrs, newAttrs);
+
             // Update children
             this._updateChildren(element, oldVNode.children, newVNode.children);
         }
@@ -724,6 +719,10 @@ export class DOM {
      * @param {Object} newAttrs - New attributes
      */
     _updateAttributes(element, oldAttrs, newAttrs) {
+        // Handle null/undefined attributes
+        oldAttrs = oldAttrs || {};
+        newAttrs = newAttrs || {};
+
         const allKeys = new Set([...Object.keys(oldAttrs), ...Object.keys(newAttrs)]);
         
         allKeys.forEach(key => {
@@ -749,7 +748,13 @@ export class DOM {
      */
     _removeEventAttribute(element, eventName) {
         const domEventName = this._convertEventName(eventName);
-        
+
+        // Remove the onclick property from the element
+        const onEventPropertyName = 'on' + domEventName;
+        if (onEventPropertyName in element) {
+            element[onEventPropertyName] = null;
+        }
+
         // Try EventManager first
         if (element._miniFrameworkEventIds) {
             const listenerId = element._miniFrameworkEventIds.get(domEventName);
@@ -759,7 +764,7 @@ export class DOM {
                 return;
             }
         }
-        
+
         // Fallback to standard cleanup
         if (element._miniFrameworkEvents) {
             const handler = element._miniFrameworkEvents.get(domEventName);

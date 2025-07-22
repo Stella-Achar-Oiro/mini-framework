@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Handler Test</title>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script type="module">
+        import { DOM } from './src/core/dom.js';
+
+        const dom = new DOM();
+        const container = document.getElementById('app');
+
+        // Test 1: React-style onClick
+        console.log('=== Test 1: React-style onClick ===');
+        const vnode1 = dom.createVNode('button', {
+            onClick: () => console.log('Button 1 clicked!'),
+            id: 'test-button-1'
+        }, ['Click me (onClick)']);
+
+        const button1 = dom.createElement(vnode1);
+        container.appendChild(button1);
+
+        console.log('Button 1 onclick property:', button1.onclick);
+        console.log('Button 1 getAttribute("onclick"):', button1.getAttribute('onclick'));
+        console.log('Button 1 onclick === function:', typeof button1.onclick === 'function');
+
+        // Test 2: lowercase onclick
+        console.log('\n=== Test 2: lowercase onclick ===');
+        const vnode2 = dom.createVNode('button', {
+            onclick: () => console.log('Button 2 clicked!'),
+            id: 'test-button-2'
+        }, ['Click me (onclick)']);
+
+        const button2 = dom.createElement(vnode2);
+        container.appendChild(button2);
+
+        console.log('Button 2 onclick property:', button2.onclick);
+        console.log('Button 2 getAttribute("onclick"):', button2.getAttribute('onclick'));
+        console.log('Button 2 onclick === function:', typeof button2.onclick === 'function');
+
+        // Test 3: Manual test for comparison
+        console.log('\n=== Test 3: Manual DOM onclick property ===');
+        const button3 = document.createElement('button');
+        button3.textContent = 'Manual onclick';
+        button3.onclick = () => console.log('Manual button clicked!');
+        container.appendChild(button3);
+
+        console.log('Button 3 onclick property:', button3.onclick);
+        console.log('Button 3 getAttribute("onclick"):', button3.getAttribute('onclick'));
+        console.log('Button 3 onclick === function:', typeof button3.onclick === 'function');
+
+        // Test 4: Test other events
+        console.log('\n=== Test 4: onMouseOver event ===');
+        const vnode4 = dom.createVNode('button', {
+            onMouseOver: () => console.log('Button 4 mouse over!'),
+            id: 'test-button-4'
+        }, ['Hover me (onMouseOver)']);
+
+        const button4 = dom.createElement(vnode4);
+        container.appendChild(button4);
+
+        console.log('Button 4 onmouseover property:', button4.onmouseover);
+        console.log('Button 4 onmouseover === function:', typeof button4.onmouseover === 'function');
+
+        // Add some styling
+        container.style.cssText = 'padding: 20px; display: flex; flex-direction: column; gap: 10px;';
+        Array.from(container.children).forEach(btn => {
+            btn.style.cssText = 'padding: 10px; margin: 5px; cursor: pointer; border: 1px solid #ccc; background: #f0f0f0;';
+        });
+
+        // Add a summary
+        const summary = document.createElement('div');
+        summary.innerHTML = `
+            <h3>Test Results Summary:</h3>
+            <p>✅ All buttons should have their onclick/onmouseover properties set to functions</p>
+            <p>✅ Click any button to test if event handlers work</p>
+            <p>✅ Hover over the last button to test mouseover</p>
+        `;
+        summary.style.cssText = 'margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 5px;';
+        container.appendChild(summary);
+    </script>
+</body>
+</html>

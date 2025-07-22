@@ -8,6 +8,9 @@ import { MiniFramework } from './core/index.js';
 // Export the main framework class
 export { MiniFramework };
 
+// Export as default for convenience
+export default MiniFramework;
+
 // Export individual modules for advanced usage
 export * from './core/index.js';
 export * from './utils/index.js';

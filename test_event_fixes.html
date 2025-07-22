@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Handler Fixes Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-button { padding: 10px 15px; margin: 5px; cursor: pointer; border: 1px solid #ccc; background: #f0f0f0; border-radius: 3px; }
+        .test-button:hover { background: #e0e0e0; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        .results { margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Event Handler Fixes Test</h1>
+    <div id="app"></div>
+    
+    <script type="module">
+        import { DOM } from './src/core/dom.js';
+        
+        const dom = new DOM();
+        const container = document.getElementById('app');
+        
+        // Test results container
+        const results = document.createElement('div');
+        results.className = 'results';
+        results.innerHTML = '<h3>Test Results:</h3>';
+        
+        function addResult(message, isSuccess = true) {
+            const p = document.createElement('p');
+            p.className = isSuccess ? 'success' : 'error';
+            p.textContent = message;
+            results.appendChild(p);
+        }
+        
+        function addInfo(message) {
+            const p = document.createElement('p');
+            p.className = 'info';
+            p.textContent = message;
+            results.appendChild(p);
+        }
+        
+        // Test 1: React-style onClick
+        const section1 = document.createElement('div');
+        section1.className = 'test-section';
+        section1.innerHTML = '<h3>Test 1: React-style onClick</h3>';
+        
+        const vnode1 = dom.createVNode('button', {
+            onClick: () => {
+                console.log('Button 1 clicked!');
+                addResult('✅ Button 1 click handler executed successfully!');
+            },
+            id: 'test-button-1',
+            class: 'test-button'
+        }, ['Click me (onClick)']);
+        
+        const button1 = dom.createElement(vnode1);
+        section1.appendChild(button1);
+        
+        // Check if onclick property is set
+        if (typeof button1.onclick === 'function') {
+            addResult('✅ Button 1: onclick property is correctly set to a function');
+        } else {
+            addResult('❌ Button 1: onclick property is not set correctly', false);
+        }
+        
+        container.appendChild(section1);
+        
+        // Test 2: lowercase onclick
+        const section2 = document.createElement('div');
+        section2.className = 'test-section';
+        section2.innerHTML = '<h3>Test 2: lowercase onclick</h3>';
+        
+        const vnode2 = dom.createVNode('button', {
+            onclick: () => {
+                console.log('Button 2 clicked!');
+                addResult('✅ Button 2 click handler executed successfully!');
+            },
+            id: 'test-button-2',
+            class: 'test-button'
+        }, ['Click me (onclick)']);
+        
+        const button2 = dom.createElement(vnode2);
+        section2.appendChild(button2);
+        
+        // Check if onclick property is set
+        if (typeof button2.onclick === 'function') {
+            addResult('✅ Button 2: onclick property is correctly set to a function');
+        } else {
+            addResult('❌ Button 2: onclick property is not set correctly', false);
+        }
+        
+        container.appendChild(section2);
+        
+        // Test 3: onMouseOver event
+        const section3 = document.createElement('div');
+        section3.className = 'test-section';
+        section3.innerHTML = '<h3>Test 3: onMouseOver event</h3>';
+        
+        const vnode3 = dom.createVNode('button', {
+            onMouseOver: () => {
+                console.log('Button 3 mouse over!');
+                addResult('✅ Button 3 mouseover handler executed successfully!');
+            },
+            id: 'test-button-3',
+            class: 'test-button'
+        }, ['Hover me (onMouseOver)']);
+        
+        const button3 = dom.createElement(vnode3);
+        section3.appendChild(button3);
+        
+        // Check if onmouseover property is set
+        if (typeof button3.onmouseover === 'function') {
+            addResult('✅ Button 3: onmouseover property is correctly set to a function');
+        } else {
+            addResult('❌ Button 3: onmouseover property is not set correctly', false);
+        }
+        
+        container.appendChild(section3);
+        
+        // Test 4: Event name conversion verification
+        const section4 = document.createElement('div');
+        section4.className = 'test-section';
+        section4.innerHTML = '<h3>Test 4: Event Name Conversion</h3>';
+        
+        // Test the _convertEventName method directly
+        const testEventNames = [
+            { input: 'onClick', expected: 'click' },
+            { input: 'onMouseOver', expected: 'mouseover' },
+            { input: 'onDoubleClick', expected: 'dblclick' },
+            { input: 'onKeyDown', expected: 'keydown' }
+        ];
+        
+        testEventNames.forEach(test => {
+            const result = dom._convertEventName(test.input);
+            if (result === test.expected) {
+                addResult(`✅ Event conversion: ${test.input} → ${result}`);
+            } else {
+                addResult(`❌ Event conversion failed: ${test.input} → ${result} (expected: ${test.expected})`, false);
+            }
+        });
+        
+        container.appendChild(section4);
+        
+        // Test 5: Manual comparison
+        const section5 = document.createElement('div');
+        section5.className = 'test-section';
+        section5.innerHTML = '<h3>Test 5: Manual DOM Comparison</h3>';
+        
+        const manualButton = document.createElement('button');
+        manualButton.textContent = 'Manual onclick (for comparison)';
+        manualButton.className = 'test-button';
+        manualButton.onclick = () => {
+            console.log('Manual button clicked!');
+            addResult('✅ Manual button click handler executed successfully!');
+        };
+        section5.appendChild(manualButton);
+        
+        addInfo(`Manual button onclick type: ${typeof manualButton.onclick}`);
+        addInfo(`Framework button 1 onclick type: ${typeof button1.onclick}`);
+        addInfo(`Framework button 2 onclick type: ${typeof button2.onclick}`);
+        
+        container.appendChild(section5);
+        
+        // Add results at the end
+        container.appendChild(results);
+        
+        // Summary
+        addInfo('=== Summary ===');
+        addInfo('All buttons should have their onclick/onmouseover properties set to functions');
+        addInfo('Click any button to test if event handlers work');
+        addInfo('Hover over Button 3 to test mouseover');
+        addInfo('Check the console for event handler execution logs');
+    </script>
+</body>
+</html>

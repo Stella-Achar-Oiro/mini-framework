@@ -70,7 +70,7 @@ export class MiniFramework {
         // Component and plugin registries
         this.components = new Map();
         this.plugins = new Map();
-        this.middleware = [];
+        this.middlewares = [];
         
         // Lifecycle hooks
         this.hooks = {
@@ -141,7 +141,9 @@ export class MiniFramework {
 
             // Connect state to re-rendering
             this.state.subscribe(() => {
+                this.logger.debug('State change detected, autoRerender:', this.options.autoRerender);
                 if (this.options.autoRerender) {
+                    this.logger.debug('Scheduling re-render');
                     this._scheduleRerender();
                 }
             });
@@ -176,35 +178,41 @@ export class MiniFramework {
      * @param {Object} props - Props to pass to component
      * @returns {MiniFramework} Framework instance for chaining
      */
-    render(component, props = {}) {
+    render(component, props) {
         if (!this.container) {
             throw new Error('Framework not initialized. Call init() first.');
         }
 
         const startTime = performance.now();
-        
-        return this.errorBoundary.wrap(() => {
+
+        // Only default props to empty object if not provided at all (not explicitly undefined)
+        const hasPropsArg = arguments.length > 1;
+        if (!hasPropsArg) {
+            props = {};
+        }
+
+        this.errorBoundary.wrap(() => {
             // Store for re-rendering
             this._lastComponent = component;
             this._lastProps = props;
-            
-            // Apply middleware to props
-            const processedProps = this._applyMiddleware(props, 'props');
-            
+
+            // Apply middleware to props (use empty object for middleware if props is undefined)
+            const processedProps = this._applyMiddleware(props || {}, 'props');
+
             let vnode;
-            
+
             if (typeof component === 'string') {
                 // Component by name
                 const componentDef = this.components.get(component);
                 if (!componentDef) {
                     throw new Error(`Component "${component}" not found`);
                 }
-                vnode = typeof componentDef === 'function' 
-                    ? componentDef(processedProps) 
+                vnode = typeof componentDef === 'function'
+                    ? componentDef(props === undefined || props === null ? props : processedProps)
                     : componentDef;
             } else if (typeof component === 'function') {
-                // Component function
-                vnode = component(processedProps);
+                // Component function - pass original props if explicitly undefined or null, otherwise processed props
+                vnode = component(props === undefined || props === null ? props : processedProps);
             } else {
                 // Direct vnode
                 vnode = component;
@@ -217,21 +225,24 @@ export class MiniFramework {
             this.container.innerHTML = '';
             const element = this.dom.createElement(vnode);
             this.container.appendChild(element);
-            
-            // Track performance
-            const renderTime = performance.now() - startTime;
-            this.performance.renderTimes.push(renderTime);
-            this.performance.lastRender = renderTime;
-            this.renderCount++;
-            
-            // Keep only last 100 render times
-            if (this.performance.renderTimes.length > 100) {
-                this.performance.renderTimes.shift();
-            }
-            
-            this.logger.debug(`Component rendered successfully in ${renderTime.toFixed(2)}ms`);
-            return this;
+
+            this.logger.debug(`Component rendered successfully`);
+            return true; // Indicate successful render
         }, 'Render failed');
+
+        // Track performance and increment render count regardless of success/failure
+        const renderTime = performance.now() - startTime;
+        this.performance.renderTimes.push(renderTime);
+        this.performance.lastRender = renderTime;
+        this.renderCount++;
+
+        // Keep only last 100 render times
+        if (this.performance.renderTimes.length > 100) {
+            this.performance.renderTimes.shift();
+        }
+
+        // Always return framework instance for chaining
+        return this;
     }
 
     /**
@@ -292,15 +303,24 @@ export class MiniFramework {
 
     /**
      * Add middleware function
-     * @param {Function} middleware - Middleware function
+     * @param {Function} middlewareFn - Middleware function
      * @returns {MiniFramework} Framework instance for chaining
      */
-    middleware(middleware) {
-        if (typeof middleware !== 'function') {
+    use(middlewareFn) {
+        if (typeof middlewareFn !== 'function') {
             throw new Error('Middleware must be a function');
         }
-        this.middleware.push(middleware);
+        this.middlewares.push(middlewareFn);
         return this;
+    }
+
+    /**
+     * Add middleware function (alias for use)
+     * @param {Function} middlewareFn - Middleware function
+     * @returns {MiniFramework} Framework instance for chaining
+     */
+    middleware(middlewareFn) {
+        return this.use(middlewareFn);
     }
 
     /**
@@ -427,10 +447,17 @@ export class MiniFramework {
         if (this._rerenderTimeout) {
             clearTimeout(this._rerenderTimeout);
         }
-        
-        this._rerenderTimeout = setTimeout(() => {
+
+        const delay = this.options.rerenderDelay || 16; // Default to ~60fps
+
+        if (delay === 0) {
+            // Immediate re-render for testing or when delay is 0
             this._rerender();
-        }, this.options.rerenderDelay || 16); // Default to ~60fps
+        } else {
+            this._rerenderTimeout = setTimeout(() => {
+                this._rerender();
+            }, delay);
+        }
     }
 
     /**
@@ -448,21 +475,53 @@ export class MiniFramework {
         const startTime = performance.now();
         
         try {
-            // Re-render the last component with current state
-            this.render(this._lastComponent, this._lastProps);
-            
+            // Re-render the last component with current state - avoid calling render() to prevent recursion
+            const component = this._lastComponent;
+            const props = this._lastProps;
+
+            // Apply middleware to props (use empty object for middleware if props is undefined)
+            const processedProps = this._applyMiddleware(props || {}, 'props');
+
+            let vnode;
+
+            if (typeof component === 'string') {
+                // Component by name
+                const componentDef = this.components.get(component);
+                if (!componentDef) {
+                    throw new Error(`Component "${component}" not found`);
+                }
+                vnode = typeof componentDef === 'function'
+                    ? componentDef(props === undefined || props === null ? props : processedProps)
+                    : componentDef;
+            } else if (typeof component === 'function') {
+                // Component function - pass original props if explicitly undefined or null, otherwise processed props
+                vnode = component(props === undefined || props === null ? props : processedProps);
+            } else {
+                // Direct vnode
+                vnode = component;
+            }
+
+            // Apply middleware to vnode
+            vnode = this._applyMiddleware(vnode, 'vnode');
+
+            // Clear container and render
+            this.container.innerHTML = '';
+            const element = this.dom.createElement(vnode);
+            this.container.appendChild(element);
+
             const renderTime = performance.now() - startTime;
             this.performance.renderTimes.push(renderTime);
             this.performance.lastRender = renderTime;
-            
+
             // Keep only last 100 render times for average calculation
             if (this.performance.renderTimes.length > 100) {
                 this.performance.renderTimes.shift();
             }
-            
+
             this.phase = LIFECYCLE_PHASES.UPDATED;
             this._callHooks('afterUpdate');
-            
+
+            this.logger.debug(`Component re-rendered in ${renderTime.toFixed(2)}ms`);
         } catch (error) {
             this.errorBoundary.handleError('Re-render failed', error);
         }
@@ -476,7 +535,7 @@ export class MiniFramework {
      * @returns {*} Processed value
      */
     _applyMiddleware(value, type) {
-        return this.middleware.reduce((acc, middleware) => {
+        return this.middlewares.reduce((acc, middleware) => {
             try {
                 return middleware(acc, type, this) || acc;
             } catch (error) {

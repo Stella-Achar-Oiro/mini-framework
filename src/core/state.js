@@ -927,4 +927,23 @@ export class StateManager {
             this.logger.error('Failed to persist state:', error);
         }
     }
+
+    /**
+     * Convenience method for getting state (alias for getState)
+     * @param {string} path - Optional path to get specific value
+     * @returns {*} Current state or value at path
+     */
+    get(path) {
+        return this.getState(path);
+    }
+
+    /**
+     * Convenience method for setting state (alias for setState)
+     * @param {string|Object} pathOrState - Path string or state object
+     * @param {*} value - Value to set (if first param is path)
+     * @returns {Promise<StateManager>} State manager instance for chaining
+     */
+    set(pathOrState, value) {
+        return this.setState(pathOrState, value);
+    }
 }
