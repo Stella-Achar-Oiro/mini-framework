@@ -23,13 +23,13 @@ export default class TodoFooter {
 
     render() {
         const itemsText = this.activeCount === 1 ? 'item' : 'items';
-        
-        return [
+
+        return this.app.dom.createFragmentVNode([
             this.app.dom.createVNode('span', { class: 'todo-count' }, [
                 this.app.dom.createVNode('strong', {}, [this.activeCount.toString()]),
                 ` ${itemsText} left`
             ]),
-            
+
             this.app.dom.createVNode('ul', { class: 'filters' }, [
                 this.app.dom.createVNode('li', {}, [
                     this.app.dom.createVNode('a', {
@@ -53,11 +53,11 @@ export default class TodoFooter {
                     }, ['Completed'])
                 ])
             ]),
-            
+
             this.completedCount > 0 && this.app.dom.createVNode('button', {
                 class: 'clear-completed',
                 onClick: () => this.handleClearCompleted()
             }, ['Clear completed'])
-        ].filter(Boolean);
+        ].filter(Boolean));
     }
 }

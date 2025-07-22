@@ -73,7 +73,7 @@ export default class TodoItem {
                 class: 'edit',
                 value: this.todo.text,
                 autofocus: true,
-                onKeypress: (event) => this.handleEditKeyPress(event),
+                onKeydown: (event) => this.handleEditKeyPress(event),
                 onBlur: (event) => this.handleEditBlur(event)
             })
         ].filter(Boolean));

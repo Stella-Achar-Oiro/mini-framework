@@ -20,7 +20,7 @@ export default class TodoMain {
         const allTodos = this.app.state.getState().todos;
         const allCompleted = allTodos.length > 0 && allTodos.every(todo => todo.completed);
 
-        return [
+        return this.app.dom.createFragmentVNode([
             this.app.dom.createVNode('input', {
                 id: 'toggle-all',
                 class: 'toggle-all',
@@ -28,16 +28,16 @@ export default class TodoMain {
                 checked: allCompleted,
                 onChange: () => this.handleToggleAll()
             }),
-            
+
             this.app.dom.createVNode('label', {
                 for: 'toggle-all'
             }, ['Mark all as complete']),
-            
+
             this.app.dom.createVNode('ul', {
                 class: 'todo-list'
-            }, this.todos.map(todo => 
+            }, this.todos.map(todo =>
                 new TodoItem(this.app, todo, this.editingId === todo.id).render()
             ))
-        ];
+        ]);
     }
 }

@@ -16,7 +16,16 @@ const framework = new MiniFramework({
     }
 });
 
-// Create TodoMVC app instance
+// Initialize the framework first
+try {
+    framework.init();
+    console.log('Mini Framework initialized');
+} catch (error) {
+    console.error('Failed to initialize Mini Framework:', error);
+    throw error;
+}
+
+// Create TodoMVC app instance after framework is initialized
 const todoApp = new TodoApp(framework);
 
 // Render function
@@ -38,17 +47,16 @@ framework.state.subscribe(() => {
 });
 
 // Setup router change rendering
-framework.router.subscribe(() => {
+window.addEventListener('navigate', () => {
     render();
 });
 
-// Initialize the framework and render
+// Initial render
 try {
-    framework.init();
     render();
     console.log('TodoMVC app initialized with Mini Framework');
 } catch (error) {
-    console.error('Failed to initialize TodoMVC:', error);
+    console.error('Failed to render TodoMVC:', error);
 }
 
 // Export for debugging
