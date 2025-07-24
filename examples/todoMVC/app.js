@@ -26,6 +26,9 @@ function render() {
         // Clear existing content
         appElement.innerHTML = '';
         
+        // Ensure the container has the todoapp class
+        appElement.className = 'todoapp';
+        
         // Render the TodoMVC app
         const vnode = todoApp.render();
         framework.dom.render(vnode, appElement);
@@ -37,18 +40,20 @@ framework.state.subscribe(() => {
     render();
 });
 
-// Setup router change rendering
-framework.router.subscribe(() => {
+// Setup router change event handling
+framework.router.events.on(window, 'navigate', () => {
     render();
 });
 
 // Initialize the framework and render
-framework.init().then(() => {
-    render();
-    console.log('TodoMVC app initialized with Mini Framework');
-}).catch(error => {
-    console.error('Failed to initialize TodoMVC:', error);
-});
+framework.init();
+
+// Ensure the state is initialized before rendering
+todoApp.initializeState();
+
+// Initial render
+render();
+console.log('TodoMVC app initialized with Mini Framework');
 
 // Export for debugging
 window.todoApp = todoApp;

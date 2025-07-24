@@ -137,7 +137,10 @@ export default class TodoApp {
     }
 
     render() {
-        const { todos, filter, editingId } = this.state.getState();
+        const state = this.state.getState() || {};
+        const todos = state.todos || [];
+        const filter = state.filter || 'all';
+        const editingId = state.editingId || null;
         
         // Filter todos based on current filter
         const filteredTodos = todos.filter(todo => {
@@ -152,9 +155,7 @@ export default class TodoApp {
         const completedTodos = todos.filter(todo => todo.completed);
         const hasTodos = todos.length > 0;
 
-        return this.dom.createVNode('section', {
-            class: 'todoapp'
-        }, [
+        return [
             this.dom.createVNode('header', { class: 'header' }, [
                 this.dom.createVNode('h1', {}, ['todos']),
                 new TodoHeader(this).render()
@@ -167,6 +168,6 @@ export default class TodoApp {
             hasTodos && this.dom.createVNode('footer', { class: 'footer' }, [
                 new TodoFooter(this, activeTodos.length, completedTodos.length, filter).render()
             ])
-        ].filter(Boolean));
+        ].filter(Boolean);
     }
 }

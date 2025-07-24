@@ -60,7 +60,7 @@ export default class TodoItem {
                 }),
                 
                 this.app.dom.createVNode('label', {
-                    onDoubleclick: () => this.handleDoubleClick()
+                    onDblclick: () => this.handleDoubleClick()
                 }, [this.todo.text]),
                 
                 this.app.dom.createVNode('button', {
@@ -73,7 +73,7 @@ export default class TodoItem {
                 class: 'edit',
                 value: this.todo.text,
                 autofocus: true,
-                onKeypress: (event) => this.handleEditKeyPress(event),
+                onKeydown: (event) => this.handleEditKeyPress(event),
                 onBlur: (event) => this.handleEditBlur(event)
             })
         ].filter(Boolean));

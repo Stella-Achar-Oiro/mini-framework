@@ -22,7 +22,7 @@ export default class TodoHeader {
             class: 'new-todo',
             placeholder: 'What needs to be done?',
             autofocus: true,
-            onKeypress: (event) => this.handleKeyPress(event)
+            onKeydown: (event) => this.handleKeyPress(event)
         });
     }
 }
